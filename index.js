@@ -49,18 +49,34 @@ async function run() {
       res.send({ result, token });
     });
 
+    // Get a single user by email
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+
+      const user = await usersCollection.findOne(query);
+      console.log(user.role);
+      res.send(user);
+    });
+    // Get all users
+    app.get("/users", async (req, res) => {
+      const users = await usersCollection.find().toArray();
+      console.log(users);
+      res.send(users);
+    });
+
+    // Save a booking
+    app.post("/bookings", async (req, res) => {
+      const bookingData = req.body;
+      const result = await bookingsCollection.insertOne(bookingData);
+      console.log(result);
+      res.send(result);
+    });
+
     console.log("Database Connected...");
   } finally {
   }
 }
-
-// Save a booking
-app.post("/bookings", async (req, res) => {
-  const bookingData = req.body;
-  const result = await bookingsCollection.insertOne(bookingData);
-  console.log(result);
-  res.send(result);
-});
 
 run().catch((err) => console.error(err));
 
