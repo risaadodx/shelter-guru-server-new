@@ -22,6 +22,9 @@ async function run() {
   try {
     const homesCollection = client.db("shelterGuruDb").collection("homes");
     const usersCollection = client.db("shelterGuruDb").collection("users");
+    const bookingsCollection = client
+      .db("shelterGuruDb")
+      .collection("bookings");
 
     //save user email & generate jwt
     app.put("/user/:email", async (req, res) => {
@@ -50,6 +53,14 @@ async function run() {
   } finally {
   }
 }
+
+// Save a booking
+app.post("/bookings", async (req, res) => {
+  const bookingData = req.body;
+  const result = await bookingsCollection.insertOne(bookingData);
+  console.log(result);
+  res.send(result);
+});
 
 run().catch((err) => console.error(err));
 
