@@ -65,6 +65,71 @@ async function run() {
       res.send(users);
     });
 
+    // Get All Homes
+    app.get("/homes", async (req, res) => {
+      const query = {};
+      const cursor = homesCollection.find(query);
+      const homes = await cursor.toArray();
+      res.send(homes);
+    });
+
+    // Get All Homes for host
+    app.get("/homes/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const decodedEmail = req.decoded.email;
+
+      if (email !== decodedEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const query = {
+        "host.email": email,
+      };
+      const cursor = homesCollection.find(query);
+      const homes = await cursor.toArray();
+      res.send(homes);
+    });
+
+    // Get Single Home
+    app.get("/home/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const home = await homesCollection.findOne(query);
+      res.send(home);
+    });
+
+    // Delete a home
+    app.delete("/home/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await homesCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Update A Home
+    app.put("/homes", verifyJWT, async (req, res) => {
+      const home = req.body;
+      console.log(home);
+
+      const filter = {};
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: home,
+      };
+      const result = await homesCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+
+    // Post A Home
+    app.post("/homes", verifyJWT, async (req, res) => {
+      const home = req.body;
+      console.log(home);
+      const result = await homesCollection.insertOne(home);
+      res.send(result);
+    });
     // Save a booking
     app.post("/bookings", async (req, res) => {
       const bookingData = req.body;
