@@ -86,13 +86,20 @@ async function run() {
         updateDoc,
         options
       );
-      console.log(result);
 
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "1d",
       });
-      console.log(token);
+      console.log(result);
       res.send({ result, token });
+    });
+
+    // Get all users
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
+      const query = {};
+      const cursor = usersCollection.find(query);
+      const users = await cursor.toArray();
+      res.send(users);
     });
 
     // Get a single user by email
@@ -106,13 +113,6 @@ async function run() {
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       res.send(user);
-    });
-
-    // Get all users
-    app.get("/users", verifyJWT, async (req, res) => {
-      const users = await usersCollection.find().toArray();
-      console.log(users);
-      res.send(users);
     });
 
     // Get All Homes
@@ -180,6 +180,19 @@ async function run() {
       const result = await homesCollection.insertOne(home);
       res.send(result);
     });
+
+    // Get search result
+    app.get("/search-result", async (req, res) => {
+      const query = {};
+      const location = req.query.location;
+      if (location) query.location = location;
+
+      console.log(query);
+      const cursor = homesCollection.find(query);
+      const homes = await cursor.toArray();
+      res.send(homes);
+    });
+
     // Save a booking
     app.post("/bookings", verifyJWT, async (req, res) => {
       const booking = req.body;
