@@ -83,16 +83,20 @@ async function run() {
     });
 
     // Get a single user by email
-    app.get("/user/:email", async (req, res) => {
+    app.get("/user/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
-      const query = { email: email };
+      const decodedEmail = req.decoded.email;
 
+      if (email !== decodedEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const query = { email: email };
       const user = await usersCollection.findOne(query);
-      console.log(user.role);
       res.send(user);
     });
+
     // Get all users
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyJWT, async (req, res) => {
       const users = await usersCollection.find().toArray();
       console.log(users);
       res.send(users);
@@ -157,22 +161,31 @@ async function run() {
     });
 
     // Post A Home
-    app.post("/homes", async (req, res) => {
+    app.post("/homes", verifyJWT, async (req, res) => {
       const home = req.body;
       console.log(home);
       const result = await homesCollection.insertOne(home);
       res.send(result);
     });
     // Save a booking
-    app.post("/bookings", async (req, res) => {
-      const bookingData = req.body;
-      const result = await bookingsCollection.insertOne(bookingData);
-      console.log(result);
+    app.post("/bookings", verifyJWT, async (req, res) => {
+      const booking = req.body;
+      console.log(booking);
+      const result = await bookingsCollection.insertOne(booking);
+
+      console.log("result----->", result);
+      sendMail(
+        {
+          subject: "Booking Successful!",
+          message: `Booking Id: ${result?.insertedId}, TransactionId: ${booking.transactionId}`,
+        },
+        booking?.guestEmail
+      );
       res.send(result);
     });
 
     // Get All Bookings
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings", verifyJWT, async (req, res) => {
       let query = {};
       const email = req.query.email;
       if (email) {
@@ -181,8 +194,16 @@ async function run() {
         };
       }
 
-      const booking = await bookingsCollection.find(query).toArray();
-      console.log(booking);
+      const cursor = bookingsCollection.find(query);
+      const bookings = await cursor.toArray();
+      res.send(bookings);
+    });
+
+    // Get a single booking
+    app.get("/booking/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const booking = await bookingsCollection.findOne(query);
       res.send(booking);
     });
     // Add a home
