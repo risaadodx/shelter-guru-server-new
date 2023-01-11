@@ -193,23 +193,6 @@ async function run() {
       res.send(homes);
     });
 
-    // Save a booking
-    app.post("/bookings", verifyJWT, async (req, res) => {
-      const booking = req.body;
-      console.log(booking);
-      const result = await bookingsCollection.insertOne(booking);
-
-      console.log("result----->", result);
-      sendMail(
-        {
-          subject: "Booking Successful!",
-          message: `Booking Id: ${result?.insertedId}, TransactionId: ${booking.transactionId}`,
-        },
-        booking?.guestEmail
-      );
-      res.send(result);
-    });
-
     // Get All Bookings
     app.get("/bookings", verifyJWT, async (req, res) => {
       let query = {};
@@ -231,6 +214,26 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const booking = await bookingsCollection.findOne(query);
       res.send(booking);
+    });
+
+    // Save a booking
+    app.post("/bookings", verifyJWT, async (req, res) => {
+      const booking = req.body;
+      console.log(booking);
+      const result = await bookingsCollection.insertOne(booking);
+
+      console.log("result----->", result);
+      //send mail code here
+
+      res.send(result);
+    });
+
+    // Cancel a booking
+    app.delete("/booking/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await bookingsCollection.deleteOne(query);
+      res.send(result);
     });
 
     //
