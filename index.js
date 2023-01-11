@@ -59,6 +59,19 @@ async function run() {
       .db("shelterGuruDb")
       .collection("bookings");
 
+    // Verify Admin
+    const verifyAdmin = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await usersCollection.findOne(query);
+
+      if (user?.role !== "admin") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      console.log("Admin true");
+      next();
+    };
+
     //save user email & generate jwt
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -206,13 +219,7 @@ async function run() {
       const booking = await bookingsCollection.findOne(query);
       res.send(booking);
     });
-    // Add a home
-    app.post("/homes", async (req, res) => {
-      const homes = req.body;
-      const result = await homesCollection.insertOne(homes);
-      console.log(result);
-      res.send(result);
-    });
+
     //
     console.log("Database Connected...");
   } finally {
