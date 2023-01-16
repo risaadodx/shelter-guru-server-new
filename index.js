@@ -43,6 +43,32 @@ function verifyJWT(req, res, next) {
   });
 }
 
+// Send Email
+const sendMail = (emailData, email) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: emailData?.subject,
+    html: `<p>${emailData?.message}</p>`,
+  };
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log("Email sent: " + info.response);
+    }
+  });
+};
+
 // Database Connection
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@dbuser1.oi3ncct.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -223,7 +249,14 @@ async function run() {
       const result = await bookingsCollection.insertOne(booking);
 
       console.log("result----->", result);
-      //send mail code here
+
+      sendMail(
+        {
+          subject: "Booking Successful!",
+          message: `Booking Id: ${result?.insertedId}, TransactionId: ${booking.transactionId}`,
+        },
+        booking?.guestEmail
+      );
 
       res.send(result);
     });
